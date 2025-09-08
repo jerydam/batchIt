@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Token Transfer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.10.0/web3.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .wallet-status {
+            background: #f8fafc;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .status-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .status-value {
+            font-family: monospace;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+        }
+        
+        .connect-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .connect-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 5px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #4f46e5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .recipients-container {
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .recipient-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        
+        .recipient-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .recipient-input {
+            flex: 2;
+        }
+        
+        .amount-input {
+            flex: 1;
+        }
+        
+        .remove-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .add-recipient-btn {
+            background: #06b6d4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .alert {
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .alert.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        
+        .contract-info {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .contract-info h3 {
+            color: #374151;
+            margin-bottom: 10px;
+        }
+        
+        .contract-address {
+            font-family: monospace;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            word-break: break-all;
+        }
+
+        .debug-info {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            border-left: 4px solid #6366f1;
+        }
+        
+        .debug-toggle {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Batch Token Transfer</h1>
+            <p>Send tokens to multiple wallets in a single transaction</p>
+        </div>
+        
+        <div class="wallet-status">
+            <div class="status-item">
+                <span class="status-label">Wallet Status:</span>
+                <button id="connectBtn" class="connect-btn">Connect Wallet</button>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Account:</span>
+                <span id="accountAddress" class="status-value">Not connected</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Network:</span>
+                <span id="networkName" class="status-value">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Balance:</span>
+                <span id="balance" class="status-value">-</span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="contract-info">
+                <h3>📋 Contract Information</h3>
+                <div class="contract-address">
+                    <strong>Address:</strong> 0x6a0B3Cbcc716bE476b80F08d8A4a982214F29FB0
+                </div>
+            </div>
+            
+            <button class="debug-toggle" onclick="toggleDebug()">Toggle Debug Info</button>
+            <div id="debugInfo" class="debug-info" style="display: none;">
+                <div id="debugContent">Debug information will appear here...</div>
+            </div>
+            
+            <div id="alerts"></div>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('equal')">Equal Amounts</button>
+                <button class="tab" onclick="switchTab('different')">Different Amounts</button>
+                <button class="tab" onclick="switchTab('eth')">ETH Transfer</button>
+            </div>
+            
+            <!-- Equal Amounts Tab -->
+            <div id="equal-tab" class="tab-content active">
+                <form id="equalForm">
+                    <div class="form-group">
+                        <label class="form-label">Token Contract Address</label>
+                        <input type="text" id="tokenAddressEqual" class="form-input" placeholder="0x..." required>
+                        <small>Make sure you have approved this contract to spend your tokens</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Amount per Recipient (in token units, not wei)</label>
+                        <input type="number" id="amountPerRecipient" class="form-input" placeholder="100" step="any" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Recipients (one address per line)</label>
+                        <textarea id="recipientsEqual" class="form-input textarea" placeholder="0x123...&#10;0x456...&#10;0x789..." required></textarea>
+                    </div>
+                    
+                    <button type="button" class="submit-btn" style="background: #f59e0b; margin-bottom: 10px;" onclick="checkTokenAllowance('equal')">
+                        Check Token Allowance
+                    </button>
+                    
+                    <button type="submit" id="submitEqual" class="submit-btn">
+                        Send Equal Amounts
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Different Amounts Tab -->
+            <div id="different-tab" class="tab-content">
+                <form id="differentForm">
+                    <div class="form-group">
+                        <label class="form-label">Token Contract Address</label>
+                        <input type="text" id="tokenAddressDifferent" class="form-input" placeholder="0x..." required>
+                        <small>Make sure you have approved this contract to spend your tokens</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Recipients and Amounts</label>
+                        <div id="recipientsContainer" class="recipients-container">
+                            <div class="recipient-row">
+                                <input type="text" class="form-input recipient-input" placeholder="0x123..." required>
+                                <input type="number" class="form-input amount-input" placeholder="Amount" step="any" required>
+                                <button type="button" class="remove-btn" onclick="removeRecipient(this)">Remove</button>
+                            </div>
+                        </div>
+                        <button type="button" class="add-recipient-btn" onclick="addRecipient()">+ Add Recipient</button>
+                    </div>
+                    
+                    <button type="button" class="submit-btn" style="background: #f59e0b; margin-bottom: 10px;" onclick="checkTokenAllowance('different')">
+                        Check Token Allowance
+                    </button>
+                    
+                    <button type="submit" id="submitDifferent" class="submit-btn">
+                        Send Different Amounts
+                    </button>
+                </form>
+            </div>
+            
+            <!-- ETH Transfer Tab -->
+            <div id="eth-tab" class="tab-content">
+                <form id="ethForm">
+                    <div class="form-group">
+                        <label class="form-label">Recipients and ETH Amounts</label>
+                        <div id="ethRecipientsContainer" class="recipients-container">
+                            <div class="recipient-row">
+                                <input type="text" class="form-input recipient-input" placeholder="0x123..." required>
+                                <input type="number" class="form-input amount-input" placeholder="ETH Amount" step="any" required>
+                                <button type="button" class="remove-btn" onclick="removeEthRecipient(this)">Remove</button>
+                            </div>
+                        </div>
+                        <button type="button" class="add-recipient-btn" onclick="addEthRecipient()">+ Add Recipient</button>
+                    </div>
+                    
+                    <button type="submit" id="submitEth" class="submit-btn">
+                        Send ETH
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CONTRACT_ADDRESS = '0x6a0B3Cbcc716bE476b80F08d8A4a982214F29FB0';
+        const CONTRACT_ABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"token","type":"address"},{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":false,"internalType":"uint256","name":"totalAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"recipientCount","type":"uint256"}],"name":"BatchTransfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"recipient","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"TransferFailed","type":"event"},{"inputs":[{"internalType":"address","name":"token","type":"address"},{"internalType":"address[]","name":"recipients","type":"address[]"},{"internalType":"uint256[]","name":"amounts","type":"uint256[]"}],"name":"batchTransferDifferent","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address[]","name":"recipients","type":"address[]"},{"internalType":"uint256[]","name":"amounts","type":"uint256[]"}],"name":"batchTransferETH","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"token","type":"address"},{"internalType":"address[]","name":"recipients","type":"address[]"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"batchTransferEqual","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"token","type":"address"}],"name":"emergencyWithdraw","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"stateMutability":"payable","type":"receive"}];
+        
+        const ERC20_ABI = [
+            {
+                "constant": true,
+                "inputs": [{"name": "_owner", "type": "address"}, {"name": "_spender", "type": "address"}],
+                "name": "allowance",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "type": "function"
+            },
+            {
+                "constant": false,
+                "inputs": [{"name": "_spender", "type": "address"}, {"name": "_value", "type": "uint256"}],
+                "name": "approve",
+                "outputs": [{"name": "", "type": "bool"}],
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [{"name": "_owner", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [],
+                "name": "decimals",
+                "outputs": [{"name": "", "type": "uint8"}],
+                "type": "function"
+            }
+        ];
+        
+        let web3;
+        let contract;
+        let userAccount;
+        let debugMode = false;
+        
+        function log(message, data = null) {
+            console.log(`[BatchTransfer] ${message}`, data || '');
+            if (debugMode) {
+                updateDebugInfo(`${new Date().toLocaleTimeString()}: ${message}`, data);
+            }
+        }
+        
+        function logError(message, error) {
+            console.error(`[BatchTransfer ERROR] ${message}`, error);
+            if (debugMode) {
+                updateDebugInfo(`ERROR ${new Date().toLocaleTimeString()}: ${message}`, error);
+            }
+        }
+        
+        function updateDebugInfo(message, data) {
+            const debugContent = document.getElementById('debugContent');
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = `<strong>${message}</strong>`;
+            if (data) {
+                newEntry.innerHTML += `<br><pre>${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}</pre>`;
+            }
+            debugContent.appendChild(newEntry);
+            debugContent.scrollTop = debugContent.scrollHeight;
+        }
+        
+        function toggleDebug() {
+            debugMode = !debugMode;
+            document.getElementById('debugInfo').style.display = debugMode ? 'block' : 'none';
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', async () => {
+            log('Page loaded, initializing...');
+            
+            if (typeof window.ethereum !== 'undefined') {
+                log('MetaMask detected');
+                web3 = new Web3(window.ethereum);
+                contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+                
+                // Check if already connected
+                try {
+                    const accounts = await web3.eth.getAccounts();
+                    if (accounts.length > 0) {
+                        userAccount = accounts[0];
+                        log('Wallet already connected', userAccount);
+                        await updateWalletStatus();
+                    }
+                } catch (error) {
+                    logError('Error checking existing connection', error);
+                }
+            } else {
+                logError('MetaMask not detected');
+                showAlert('MetaMask is not installed!', 'error');
+            }
+        });
+        
+        // Connect wallet
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            log('Connect wallet button clicked');
+            
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                    userAccount = accounts[0];
+                    log('Wallet connected successfully', userAccount);
+                    await updateWalletStatus();
+                    showAlert('Wallet connected successfully!', 'success');
+                } catch (error) {
+                    logError('Failed to connect wallet', error);
+                    showAlert('Failed to connect wallet: ' + error.message, 'error');
+                }
+            } else {
+                showAlert('Please install MetaMask!', 'error');
+            }
+        });
+        
+        // Update wallet status
+        async function updateWalletStatus() {
+            try {
+                document.getElementById('accountAddress').textContent = userAccount ? userAccount.slice(0, 10) + '...' + userAccount.slice(-8) : 'Not connected';
+                document.getElementById('connectBtn').textContent = userAccount ? 'Connected' : 'Connect Wallet';
+                document.getElementById('connectBtn').style.background = userAccount ? '#10b981' : '#6b7280';
+                
+                if (userAccount) {
+                    const networkId = await web3.eth.net.getId();
+                    log('Network ID', networkId);
+                    
+                    const networkNames = {
+                        1: 'Ethereum Mainnet',
+                        3: 'Ropsten Testnet',
+                        4: 'Rinkeby Testnet',
+                        5: 'Goerli Testnet',
+                        42: 'Kovan Testnet',
+                        56: 'BSC Mainnet',
+                        97: 'BSC Testnet',
+                        137: 'Polygon Mainnet',
+                        80001: 'Polygon Mumbai',
+                        42220: 'Celo Mainnet'
+                    };
+                    document.getElementById('networkName').textContent = networkNames[networkId] || `Network ID: ${networkId}`;
+                    
+                    // Get balance
+                    const balanceWei = await web3.eth.getBalance(userAccount);
+                    const balanceEth = web3.utils.fromWei(balanceWei, 'ether');
+                    document.getElementById('balance').textContent = `${parseFloat(balanceEth).toFixed(4)} ${networkId === 42220 ? 'CELO' : 'ETH'}`;
+                    
+                    log('Wallet status updated', {
+                        account: userAccount,
+                        network: networkId,
+                        balance: balanceEth
+                    });
+                }
+            } catch (error) {
+                logError('Error updating wallet status', error);
+            }
+        }
+        
+        // Check token allowance
+        async function checkTokenAllowance(tabType) {
+            if (!userAccount) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+            
+            try {
+                const tokenAddress = document.getElementById(tabType === 'equal' ? 'tokenAddressEqual' : 'tokenAddressDifferent').value;
+                
+                if (!web3.utils.isAddress(tokenAddress)) {
+                    showAlert('Invalid token address!', 'error');
+                    return;
+                }
+                
+                const tokenContract = new web3.eth.Contract(ERC20_ABI, tokenAddress);
+                
+                log('Checking token allowance', { tokenAddress, spender: CONTRACT_ADDRESS, owner: userAccount });
+                
+                const allowance = await tokenContract.methods.allowance(userAccount, CONTRACT_ADDRESS).call();
+                const balance = await tokenContract.methods.balanceOf(userAccount).call();
+                
+                let decimals;
+                try {
+                    decimals = await tokenContract.methods.decimals().call();
+                } catch {
+                    decimals = 18; // Default to 18 if decimals() call fails
+                }
+                
+                const allowanceFormatted = web3.utils.fromWei(allowance, 'ether');
+                const balanceFormatted = web3.utils.fromWei(balance, 'ether');
+                
+                log('Token info retrieved', {
+                    allowance: allowanceFormatted,
+                    balance: balanceFormatted,
+                    decimals: decimals
+                });
+                
+                showAlert(`Token Balance: ${balanceFormatted} | Allowance: ${allowanceFormatted} | Decimals: ${decimals}`, 'info');
+                
+                if (parseFloat(allowanceFormatted) === 0) {
+                    showAlert('⚠️ No allowance set! You need to approve the contract to spend your tokens first.', 'error');
+                }
+                
+            } catch (error) {
+                logError('Error checking token allowance', error);
+                showAlert('Error checking token: ' + error.message, 'error');
+            }
+        }
+        
+        // Tab switching
+        function switchTab(tabName) {
+            log('Switching to tab', tabName);
+            
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content and mark tab as active
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Add recipient for different amounts
+        function addRecipient() {
+            const container = document.getElementById('recipientsContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'recipient-row';
+            newRow.innerHTML = `
+                <input type="text" class="form-input recipient-input" placeholder="0x123..." required>
+                <input type="number" class="form-input amount-input" placeholder="Amount" step="any" required>
+                <button type="button" class="remove-btn" onclick="removeRecipient(this)">Remove</button>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        function removeRecipient(button) {
+            const container = document.getElementById('recipientsContainer');
+            if (container.children.length > 1) {
+                button.parentElement.remove();
+            }
+        }
+        
+        // Add ETH recipient
+        function addEthRecipient() {
+            const container = document.getElementById('ethRecipientsContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'recipient-row';
+            newRow.innerHTML = `
+                <input type="text" class="form-input recipient-input" placeholder="0x123..." required>
+                <input type="number" class="form-input amount-input" placeholder="ETH Amount" step="any" required>
+                <button type="button" class="remove-btn" onclick="removeEthRecipient(this)">Remove</button>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        function removeEthRecipient(button) {
+            const container = document.getElementById('ethRecipientsContainer');
+            if (container.children.length > 1) {
+                button.parentElement.remove();
+            }
+        }
+        
+        // Show alert
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            alertsContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 10000);
+        }
+        
+        // Validate Ethereum address
+        function isValidAddress(address) {
+            return web3.utils.isAddress(address);
+        }
+        
+        // Form submissions
+        document.getElementById('equalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            log('Equal amounts form submitted');
+            
+            if (!userAccount) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitEqual');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                submitBtn.innerHTML = '<span class="loading"></span>Processing...';
+                submitBtn.disabled = true;
+                
+                const tokenAddress = document.getElementById('tokenAddressEqual').value.trim();
+                const amount = document.getElementById('amountPerRecipient').value;
+                const recipientsText = document.getElementById('recipientsEqual').value;
+                
+                log('Form data collected', {
+                    tokenAddress,
+                    amount,
+                    recipientsText: recipientsText.substring(0, 100) + '...'
+                });
+                
+                // Validate token address
+                if (!isValidAddress(tokenAddress)) {
+                    throw new Error('Invalid token contract address');
+                }
+                
+                // Parse recipients
+                const recipients = recipientsText.split('\n')
+                    .map(addr => addr.trim())
+                    .filter(addr => addr.length > 0);
+                
+                if (recipients.length === 0) {
+                    throw new Error('Please enter at least one recipient address');
+                }
+                
+                // Validate all recipient addresses
+                for (let i = 0; i < recipients.length; i++) {
+                    if (!isValidAddress(recipients[i])) {
+                        throw new Error(`Invalid recipient address at line ${i + 1}: ${recipients[i]}`);
+                    }
+                }
+                
+                log('Recipients validated', { count: recipients.length, recipients });
+                
+                // Convert amount to wei (assuming 18 decimals)
+                const amountWei = web3.utils.toWei(amount.toString(), 'ether');
+                log('Amount converted to wei', { original: amount, wei: amountWei });
+                
+                // Estimate gas first
+                let gasEstimate;
+                try {
+                    gasEstimate = await contract.methods.batchTransferEqual(tokenAddress, recipients, amountWei)
+                        .estimateGas({ from: userAccount });
+                    log('Gas estimation successful', { gasEstimate });
+                } catch (gasError) {
+                    logError('Gas estimation failed', gasError);
+                    throw new Error('Transaction would fail. Check token allowance and balance. Error: ' + gasError.message);
+                }
+                
+                // Execute transaction
+                log('Executing transaction...');
+                const tx = await contract.methods.batchTransferEqual(tokenAddress, recipients, amountWei)
+                    .send({ 
+                        from: userAccount,
+                        gas: Math.floor(gasEstimate * 1.2) // Add 20% buffer
+                    });
+                
+                log('Transaction successful', tx);
+                showAlert(`Transaction successful! Hash: ${tx.transactionHash}`, 'success');
+            } catch (error) {
+                logError('Transaction failed', error);
+                showAlert('Transaction failed: ' + error.message, 'error');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+        
+        document.getElementById('differentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            log('Different amounts form submitted');
+            
+            if (!userAccount) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitDifferent');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                submitBtn.innerHTML = '<span class="loading"></span>Processing...';
+                submitBtn.disabled = true;
+                
+                const tokenAddress = document.getElementById('tokenAddressDifferent').value.trim();
+                const rows = document.getElementById('recipientsContainer').children;
+                
+                // Validate token address
+                if (!isValidAddress(tokenAddress)) {
+                    throw new Error('Invalid token contract address');
+                }
+                
+                const recipients = [];
+                const amounts = [];
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    const recipientInput = row.querySelector('.recipient-input');
+                    const amountInput = row.querySelector('.amount-input');
+                    
+                    if (recipientInput.value.trim() && amountInput.value) {
+                        const recipient = recipientInput.value.trim();
+                        
+                        if (!isValidAddress(recipient)) {
+                            throw new Error(`Invalid recipient address in row ${i + 1}: ${recipient}`);
+                        }
+                        
+                        recipients.push(recipient);
+                        amounts.push(web3.utils.toWei(amountInput.value.toString(), 'ether'));
+                    }
+                }
+                
+                if (recipients.length === 0) {
+                    throw new Error('Please enter at least one recipient and amount');
+                }
+                
+                log('Different amounts data processed', {
+                    tokenAddress,
+                    recipients,
+                    amounts: amounts.map(a => web3.utils.fromWei(a, 'ether'))
+                });
+                
+                // Estimate gas first
+                let gasEstimate;
+                try {
+                    gasEstimate = await contract.methods.batchTransferDifferent(tokenAddress, recipients, amounts)
+                        .estimateGas({ from: userAccount });
+                    log('Gas estimation successful', { gasEstimate });
+                } catch (gasError) {
+                    logError('Gas estimation failed', gasError);
+                    throw new Error('Transaction would fail. Check token allowance and balance. Error: ' + gasError.message);
+                }
+                
+                const tx = await contract.methods.batchTransferDifferent(tokenAddress, recipients, amounts)
+                    .send({ 
+                        from: userAccount,
+                        gas: Math.floor(gasEstimate * 1.2)
+                    });
+                
+                log('Transaction successful', tx);
+                showAlert(`Transaction successful! Hash: ${tx.transactionHash}`, 'success');
+            } catch (error) {
+                logError('Transaction failed', error);
+                showAlert('Transaction failed: ' + error.message, 'error');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+        
+        document.getElementById('ethForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            log('ETH transfer form submitted');
+            
+            if (!userAccount) {
+                showAlert('Please connect your wallet first!', 'error');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitEth');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                submitBtn.innerHTML = '<span class="loading"></span>Processing...';
+                submitBtn.disabled = true;
+                
+                const rows = document.getElementById('ethRecipientsContainer').children;
+                
+                const recipients = [];
+                const amounts = [];
+                let totalValue = web3.utils.toBN('0');
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    const recipientInput = row.querySelector('.recipient-input');
+                    const amountInput = row.querySelector('.amount-input');
+                    
+                    if (recipientInput.value.trim() && amountInput.value) {
+                        const recipient = recipientInput.value.trim();
+                        
+                        if (!isValidAddress(recipient)) {
+                            throw new Error(`Invalid recipient address in row ${i + 1}: ${recipient}`);
+                        }
+                        
+                        recipients.push(recipient);
+                        const amountWei = web3.utils.toWei(amountInput.value.toString(), 'ether');
+                        amounts.push(amountWei);
+                        totalValue = totalValue.add(web3.utils.toBN(amountWei));
+                    }
+                }
+                
+                if (recipients.length === 0) {
+                    throw new Error('Please enter at least one recipient and amount');
+                }
+                
+                log('ETH transfer data processed', {
+                    recipients,
+                    amounts: amounts.map(a => web3.utils.fromWei(a, 'ether')),
+                    totalValue: web3.utils.fromWei(totalValue.toString(), 'ether')
+                });
+                
+                // Check if user has enough balance
+                const balance = await web3.eth.getBalance(userAccount);
+                if (web3.utils.toBN(balance).lt(totalValue)) {
+                    throw new Error('Insufficient balance for this transaction');
+                }
+                
+                // Estimate gas first
+                let gasEstimate;
+                try {
+                    gasEstimate = await contract.methods.batchTransferETH(recipients, amounts)
+                        .estimateGas({ 
+                            from: userAccount,
+                            value: totalValue.toString()
+                        });
+                    log('Gas estimation successful', { gasEstimate });
+                } catch (gasError) {
+                    logError('Gas estimation failed', gasError);
+                    throw new Error('Transaction would fail. Error: ' + gasError.message);
+                }
+                
+                const tx = await contract.methods.batchTransferETH(recipients, amounts)
+                    .send({ 
+                        from: userAccount,
+                        value: totalValue.toString(),
+                        gas: Math.floor(gasEstimate * 1.2)
+                    });
+                
+                log('Transaction successful', tx);
+                showAlert(`Transaction successful! Hash: ${tx.transactionHash}`, 'success');
+            } catch (error) {
+                logError('Transaction failed', error);
+                showAlert('Transaction failed: ' + error.message, 'error');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+        
+        // Listen for account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', function (accounts) {
+                log('Account changed', accounts);
+                if (accounts.length > 0) {
+                    userAccount = accounts[0];
+                    updateWalletStatus();
+                } else {
+                    userAccount = null;
+                    updateWalletStatus();
+                }
+            });
+            
+            window.ethereum.on('chainChanged', function (chainId) {
+                log('Chain changed', chainId);
+                updateWalletStatus();
+            });
+        }
+    </script>
+</body>
+</html>
