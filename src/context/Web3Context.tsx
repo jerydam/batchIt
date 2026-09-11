@@ -18,13 +18,13 @@ const Web3Context = createContext<Web3ContextType | undefined>(undefined);
 export const CONTRACT_ADDRESSES = {
   celo:     '0x634B0B2353D05e644d81C1Ab395f4b266E575830',
   base:     '0x0584aa5138E12275212C390E7B398fDb4B1c94B9',
-  botchain: '0x1AD33fb2512b41C9d27d62D4cac51Bdd907DbC49',
+  botchain: '0xAf36710983613efB83E47a3EDC7651C4c33C33Cf',
 };
 
 export const CHAIN_IDS = {
   celo:     42220,
   base:     8453,
-  botchain: 968,
+  botchain: 677,
 };
 
 export const TOKENS = {
@@ -40,7 +40,7 @@ export const TOKENS = {
   ],
   botchain: [
     { symbol: 'BOT',  address: '0x0000000000000000000000000000000000000000' },
-    { symbol: 'USDT', address: '0x75edC9335175Fc0552D51D48439F229c10420fe3' },
+    { symbol: 'USDT', address: '0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C' },
   ],
 };
 
