@@ -247,8 +247,8 @@ export const Web3Provider = ({ children }: { children: ReactNode }) => {
       if (error.code === 4902) {
         const configs: Record<string, { chainName: string; rpcUrls: string[]; nativeCurrency: { name: string; symbol: string; decimals: number } }> = {
           botchain: {
-            chainName: 'BOT Chain Testnet',
-            rpcUrls: ['https://rpc.bohr.life'],
+            chainName: 'BOT Chain',
+            rpcUrls: ['https://rpc.botchain.ai'],
             nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 },
           },
         };

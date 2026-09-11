@@ -6,7 +6,7 @@ type Chain = 'celo' | 'base' | 'botchain';
 const CHAIN_CONFIG: Record<Chain, { name: string; label: string; color: string; letter: string }> = {
   celo:     { name: 'Celo',      label: 'Mainnet', color: '#FCFF52', letter: 'C' },
   base:     { name: 'Base',      label: 'Mainnet', color: '#0052FF', letter: 'B' },
-  botchain: { name: 'BOT Chain', label: 'Testnet', color: '#F0B429', letter: 'T' },
+  botchain: { name: 'BOT Chain', label: 'Mainnet', color: '#F0B429', letter: 'T' },
 };
 
 export const ChainSelector = () => {
